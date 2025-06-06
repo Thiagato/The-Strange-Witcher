@@ -16,7 +16,6 @@ if (!isset($_GET['id'])) {
 
 $post_id = $_GET['id'];
 
-// Buscar dados do post
 $sql_post = "
     SELECT p.*, u.nickname,
         (SELECT COUNT(*) FROM curtidas WHERE id_publicacao = p.id) AS total_curtidas,
@@ -34,7 +33,6 @@ if (!$post) {
     exit();
 }
 
-// Inserir novo comentário
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['texto'])) {
     $texto = trim($_POST['texto']);
     $comentario_pai = isset($_POST['id_comentario_pai']) ? $_POST['id_comentario_pai'] : null;
@@ -46,9 +44,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['texto'])) {
         exit();
     }
 }
-
-
-// Função recursiva para mostrar comentários e suas respostas
 
 function exibirComentarios($pdo, $post_id, $comentario_pai = null, $nivel = 0) {
     $usuario_id = $_SESSION['usuario_id'];
@@ -83,20 +78,32 @@ function exibirComentarios($pdo, $post_id, $comentario_pai = null, $nivel = 0) {
         exibirComentarios($pdo, $post_id, $comentario['id'], $nivel + 1);
     }
 }
-
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
     <title>Detalhes do Post</title>
+    <style>
+        .btn-curtir-comentario {
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            color: #888;
+            font-weight: bold;
+        }
+        .btn-curtir-comentario.curtido {
+            color: #e0245e;
+        }
+    </style>
 </head>
 <body>
+<?php include 'header.php'; ?>
+<div class="container">
     <a href="feed.php">⬅ Voltar para o Feed</a>
-
     <h2>Post de @<?= htmlspecialchars($post['nickname']) ?></h2>
     <p><strong>Publicado em:</strong> <?= date('d/m/Y H:i', strtotime($post['data_publicacao'])) ?></p>
     <p><?= nl2br(htmlspecialchars($post['texto'])) ?></p>
@@ -120,13 +127,14 @@ function exibirComentarios($pdo, $post_id, $comentario_pai = null, $nivel = 0) {
         <?php endif; ?>
         <button type="submit">Enviar</button>
     </form>
-
-    <script>
+</div>
+<?php include 'footer.php'; ?>
+<script>
 document.querySelectorAll('.btn-curtir-comentario').forEach(button => {
     button.addEventListener('click', () => {
         const idComentario = button.getAttribute('data-id');
 
-        fetch('curtir_comentario.php', {
+        fetch('../Controller/curtir_comentario.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'id_comentario=' + encodeURIComponent(idComentario)
@@ -150,19 +158,6 @@ document.querySelectorAll('.btn-curtir-comentario').forEach(button => {
     });
 });
 </script>
-
-<style>
-.btn-curtir-comentario {
-    cursor: pointer;
-    background-color: transparent;
-    border: none;
-    color: #888;
-    font-weight: bold;
-}
-.btn-curtir-comentario.curtido {
-    color: #e0245e;
-}
-</style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 </body>
 </html>
